@@ -19,6 +19,17 @@ PROVIDERS: dict[str, type[Provider]] = {
     Max66Provider.id: Max66Provider,
 }
 
+# 扩展适配器（不随 GitHub 发布：tokenrhythm.py / muteki.py 被 .gitignore 排除，
+# 只存在于本地；发布版构建时文件缺失 → 自动跳过，不影响其余适配器）
+try:
+    from .muteki import Sub2ApiProvider
+    from .tokenrhythm import TokenRhythmProvider
+
+    PROVIDERS[TokenRhythmProvider.id] = TokenRhythmProvider
+    PROVIDERS[Sub2ApiProvider.id] = Sub2ApiProvider
+except ImportError:
+    pass  # 发布版（无这两个文件）时跳过
+
 
 def get_provider_class(provider_id: str) -> type[Provider] | None:
     return PROVIDERS.get(provider_id)

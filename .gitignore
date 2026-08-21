@@ -24,6 +24,10 @@ maple_download.zip
 # —— 本地备份 ——
 README.original.md
 
+# —— 本地专用适配器（不随 GitHub 发布） ——
+app/providers/tokenrhythm.py
+app/providers/muteki.py
+
 # —— 编辑器 ——
 .vscode/
 .idea/
