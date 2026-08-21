@@ -37,10 +37,14 @@ jobs:
 
       - name: Build EXE
         run: |
-          pyinstaller --noconfirm --clean --onefile --windowed --name "API余额查询程序" --icon assets\app.ico --version-file version_info.txt --add-data "assets\app.ico;assets" --add-data "assets\background.png;assets" --add-data "assets\fonts;assets/fonts" main.py
+          pyinstaller --noconfirm --clean --onefile --windowed --name "ApiQuotaMonitor" --icon assets\app.ico --version-file version_info.txt --add-data "assets\app.ico;assets" --add-data "assets\background.png;assets" --add-data "assets\fonts;assets/fonts" main.py
+
+      - name: Rename EXE with version
+        run: |
+          Rename-Item -Path "dist\ApiQuotaMonitor.exe" -NewName ("ApiQuotaMonitor-" + $env:GITHUB_REF_NAME + ".exe")
 
       - name: Upload EXE to Release
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/API余额查询程序.exe
+          files: dist/ApiQuotaMonitor-*.exe
           generate_release_notes: true
