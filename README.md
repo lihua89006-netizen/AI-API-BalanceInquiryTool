@@ -12,9 +12,10 @@ ps.后续应该会添加各种形式的显示，如按次，计时等
 
 <img width="194" height="206" alt="2" src="https://github.com/user-attachments/assets/fdf45962-1175-43ed-85e1-8b20cd05bcc3" />
 
+
 点击下载👉[![最新版本](https://img.shields.io/github/v/release/lihua89006-netizen/AI-API-BalanceInquiryTool?label=最新版本&color=blue)](https://github.com/lihua89006-netizen/AI-API-BalanceInquiryTool/releases/latest)
 
-[![总下载量](https://img.shields.io/github/downloads/lihua89006-netizen/AI-API-BalanceInquiryTool/total?label=总下载量&color=green)](https://github.com/lihua89006-netizen/AI-API-BalanceInquiryTool/releases)
+
 
 ---
 
