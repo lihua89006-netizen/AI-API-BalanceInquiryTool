@@ -8,10 +8,8 @@
 from .base import Provider, QuotaInfo
 from .deepseek import DeepSeekProvider
 from .max66 import Max66Provider
-from .muteki import Sub2ApiProvider
 from .openai_compat import OpenAICompatProvider
 from .oneapi_newapi import OneApiProvider
-from .tokenrhythm import TokenRhythmProvider
 
 # 注册表：id -> Provider 类。新适配器在这里加一行即可。
 PROVIDERS: dict[str, type[Provider]] = {
@@ -19,8 +17,6 @@ PROVIDERS: dict[str, type[Provider]] = {
     OneApiProvider.id: OneApiProvider,
     DeepSeekProvider.id: DeepSeekProvider,
     Max66Provider.id: Max66Provider,
-    TokenRhythmProvider.id: TokenRhythmProvider,
-    Sub2ApiProvider.id: Sub2ApiProvider,
 }
 
 

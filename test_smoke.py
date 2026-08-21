@@ -348,7 +348,7 @@ def test_deepseek_parse():
 
 
 def test_max66_parse():
-    print("== MaxAI 中转站适配器解析 ==")
+    print("== MaxAI 适配器解析 ==")
     from app.providers.max66 import Max66Provider
     import app.providers.max66 as m66
     srv = start_fake_server(FakeMax66)
@@ -462,212 +462,6 @@ def test_http_error_status():
         srv.shutdown()
 
 
-class FakeTokenRhythm(BaseHTTPRequestHandler):
-    """模拟 tokenrhythm：POST /api/auth/login + GET /api/wallet/summary + usage/panel。"""
-
-    def _send(self, code, body: bytes, ctype="application/json"):
-        self.send_response(code)
-        self.send_header("Content-Type", ctype)
-        self.end_headers()
-        self.wfile.write(body)
-
-    def do_POST(self):
-        if self.path.endswith("/api/auth/login"):
-            body = json.dumps({
-                "code": 0, "message": "ok",
-                "data": {"user": {"id": "u1", "name": "testuser", "status": "active"}},
-            }).encode()
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json")
-            self.send_header("Set-Cookie", "tr_session=sess_test123; HttpOnly; Path=/")
-            self.end_headers()
-            self.wfile.write(body)
-        else:
-            self._send(404, b'{"code":"NOT_FOUND"}')
-
-    def do_GET(self):
-        if self.path.endswith("/api/wallet/summary"):
-            body = json.dumps({
-                "code": 0, "message": "ok",
-                "data": {"currency": "CNY",
-                         "availableBalanceCny": "62.00634400",
-                         "giftAvailableCny": "62.00634400",
-                         "giftLockedCny": "0.00000000",
-                         "rechargeBalanceCny": "0.00000000",
-                         "debtBalanceCny": "0.00000000",
-                         "frozenBalanceCny": "0.00000000"},
-            }).encode()
-            self._send(200, body)
-        elif self.path.endswith("/api/usage/panel"):
-            body = json.dumps({
-                "code": 0, "message": "ok",
-                "data": {"summary": {"calls": 297, "totalTokens": 25979481,
-                                     "costCny": "5.90414660"}},
-            }).encode()
-            self._send(200, body)
-        else:
-            self._send(404, b'{"code":"NOT_FOUND"}')
-
-    def log_message(self, *a):
-        pass
-
-
-class FakeTokenRhythmBadLogin(FakeTokenRhythm):
-    """登录失败场景。"""
-
-    def do_POST(self):
-        if self.path.endswith("/api/auth/login"):
-            body = json.dumps({"code": "UNAUTHORIZED", "message": "未认证或登录已过期"}).encode()
-            self.send_response(401)
-            self.send_header("Content-Type", "application/json")
-            self.end_headers()
-            self.wfile.write(body)
-        else:
-            super().do_POST()
-
-
-def test_tokenrhythm_parse():
-    print("== 基元律动适配器解析 ==")
-    from app.providers.tokenrhythm import TokenRhythmProvider
-    import app.providers.tokenrhythm as tr
-    srv = start_fake_server(FakeTokenRhythm)
-    port = srv.server_address[1]
-    old_base = tr.API_BASE
-    tr.API_BASE = f"http://127.0.0.1:{port}"
-    try:
-        p = TokenRhythmProvider({"account": "testuser", "password": "secret"})
-        info = p.fetch(p._new_session(timeout=5))
-        check("fetch 成功", info.ok, info.message)
-        check("可用余额=62.006344", info.remaining is not None and abs(info.remaining - 62.006344) < 1e-6, str(info.remaining))
-        check("币种 CNY", info.currency == "CNY")
-        check("extra 含赠送", "赠送 62.01" in info.extra, info.extra)
-        check("extra 含调用次数", "调用 297 次" in info.extra, info.extra)
-        check("extra 含累计花费", "累计花费" in info.extra, info.extra)
-    finally:
-        tr.API_BASE = old_base
-        srv.shutdown()
-
-    # 登录失败应报错
-    srv2 = start_fake_server(FakeTokenRhythmBadLogin)
-    port2 = srv2.server_address[1]
-    tr.API_BASE = f"http://127.0.0.1:{port2}"
-    try:
-        p2 = TokenRhythmProvider({"account": "testuser", "password": "wrong"})
-        try:
-            p2.fetch(p2._new_session(timeout=5))
-            check("登录失败应抛错", False)
-        except Exception as e:
-            check("登录失败抛错", "登录失败" in str(e), str(e))
-    finally:
-        tr.API_BASE = old_base
-        srv2.shutdown()
-
-    # 缺密码应报错
-    try:
-        TokenRhythmProvider({"account": "z"}).fetch(TokenRhythmProvider({"account": "z"})._new_session(timeout=5))
-        check("缺密码应抛错", False)
-    except Exception as e:
-        check("缺密码抛错", "密码" in str(e), str(e))
-
-
-class FakeSub2Api(BaseHTTPRequestHandler):
-    """模拟 Sub2API：登录 + user/profile + usage/stats。"""
-
-    def _send(self, code, body: bytes):
-        self.send_response(code)
-        self.send_header("Content-Type", "application/json")
-        self.end_headers()
-        self.wfile.write(body)
-
-    def do_POST(self):
-        if self.path.endswith("/auth/login"):
-            body = json.dumps({
-                "code": 0, "message": "success",
-                "data": {"access_token": "jwt-test-token", "expires_in": 3600,
-                         "user": {"id": 3531, "email": "a@b.com"}},
-            }).encode()
-            self._send(200, body)
-        else:
-            self._send(404, b'{"code":"NOT_FOUND"}')
-
-    def do_GET(self):
-        if self.path.endswith("/user/profile"):
-            body = json.dumps({
-                "code": 0, "message": "success",
-                "data": {"id": 3531, "email": "a@b.com", "username": "Zimu233L",
-                         "balance": 1.25, "frozen_balance": 0.1,
-                         "total_recharged": 5.0, "status": "active"},
-            }).encode()
-            self._send(200, body)
-        elif self.path.endswith("/usage/stats"):
-            body = json.dumps({
-                "code": 0, "message": "success",
-                "data": {"total_requests": 100, "total_tokens": 12345,
-                         "total_cost": 0.5, "total_actual_cost": 0.4},
-            }).encode()
-            self._send(200, body)
-        else:
-            self._send(404, b'{"code":"NOT_FOUND"}')
-
-    def log_message(self, *a):
-        pass
-
-
-class FakeSub2ApiBadLogin(FakeSub2Api):
-    def do_POST(self):
-        if self.path.endswith("/auth/login"):
-            body = json.dumps({"code": "UNAUTHORIZED", "message": "邮箱或密码错误"}).encode()
-            self.send_response(401)
-            self.send_header("Content-Type", "application/json")
-            self.end_headers()
-            self.wfile.write(body)
-        else:
-            super().do_POST()
-
-
-def test_sub2api_parse():
-    print("== Sub2API 适配器解析 ==")
-    from app.providers.muteki import Sub2ApiProvider
-    import app.providers.muteki as mk
-    srv = start_fake_server(FakeSub2Api)
-    port = srv.server_address[1]
-    old_base = mk.API_BASE
-    mk.API_BASE = f"http://127.0.0.1:{port}/api/v1"
-    try:
-        p = Sub2ApiProvider({"email": "a@b.com", "password": "secret"})
-        info = p.fetch(p._new_session(timeout=5))
-        check("fetch 成功", info.ok, info.message)
-        check("余额=1.25", info.remaining is not None and abs(info.remaining - 1.25) < 1e-9, str(info.remaining))
-        check("币种 USD", info.currency == "USD")
-        check("extra 含用户名", "用户 Zimu233L" in info.extra, info.extra)
-        check("extra 含冻结", "冻结 0.1000" in info.extra, info.extra)
-        check("extra 含 Token", "Token 12,345" in info.extra, info.extra)
-    finally:
-        mk.API_BASE = old_base
-        srv.shutdown()
-
-    # 登录失败
-    srv2 = start_fake_server(FakeSub2ApiBadLogin)
-    port2 = srv2.server_address[1]
-    mk.API_BASE = f"http://127.0.0.1:{port2}/api/v1"
-    try:
-        try:
-            Sub2ApiProvider({"email": "a@b.com", "password": "x"}).fetch(
-                Sub2ApiProvider({"email": "a", "password": "x"})._new_session(timeout=5))
-            check("登录失败应抛错", False)
-        except Exception as e:
-            check("登录失败抛错", "邮箱或密码错误" in str(e) or "401" in str(e), str(e))
-    finally:
-        mk.API_BASE = old_base
-        srv2.shutdown()
-
-    # 缺密码
-    try:
-        Sub2ApiProvider({"email": "a"}).fetch(Sub2ApiProvider({"email": "a"})._new_session(timeout=5))
-        check("缺密码应抛错", False)
-    except Exception as e:
-        check("缺密码抛错", "密码" in str(e), str(e))
-
 
 def test_website_urls():
     print("== 站点跳转 URL ==")
@@ -676,8 +470,6 @@ def test_website_urls():
     cases = [
         ("deepseek_official", {}, "https://platform.deepseek.com/usage"),
         ("max66_zhongzhuan", {}, "https://max66.xyz/user/dashboard"),
-        ("tokenrhythm", {}, "https://tokenrhythm.studio/account/profile"),
-        ("sub2api", {}, "https://api.muteki.site/login"),
         ("openai_compat", {"base_url": "https://api.example.com"}, "https://api.example.com"),
         ("oneapi_newapi", {"base_url": "https://chat.example.com/"}, "https://chat.example.com"),
     ]
@@ -895,8 +687,6 @@ if __name__ == "__main__":
     test_oneapi_parse()
     test_deepseek_parse()
     test_max66_parse()
-    test_tokenrhythm_parse()
-    test_sub2api_parse()
     test_website_urls()
     test_pin_flag()
     test_dialog_fields_rebuild()

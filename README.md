@@ -83,8 +83,7 @@ app/
   worker.py                后台线程刷新（含网络错误自动重试）
   providers/
     base.py                适配器基类（Provider / QuotaInfo）
-    deepseek.py / max66.py / tokenrhythm.py / muteki.py
-    openai_compat.py / oneapi_newapi.py
+    deepseek.py / max66.py / openai_compat.py / oneapi_newapi.py
     __init__.py            适配器注册表
 test_smoke.py              无界面自检（不依赖真实站点）
 verify_live.py             真实环境验证（读取 config.json 逐一真实查询）

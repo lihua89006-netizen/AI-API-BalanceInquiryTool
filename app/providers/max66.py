@@ -31,7 +31,7 @@ UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) ApiQuotaMonitor/1.0"
 
 class Max66Provider(Provider):
     id = "max66_zhongzhuan"
-    name = "MaxAI 中转站 (max66.xyz)"
+    name = "MaxAI (max66.xyz)"
     website_url = "https://max66.xyz/user/dashboard"
     description = "MaxAI 大模型 API 中转站：用账号密码登录查询余额（剩余次数 + 按量余额 + 今日已用）。"
     config_schema = [
