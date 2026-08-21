@@ -21,6 +21,9 @@ config.json.tmp
 maple_download.zip
 *.tmp
 
+# —— 本地备份 ——
+README.original.md
+
 # —— 编辑器 ——
 .vscode/
 .idea/
