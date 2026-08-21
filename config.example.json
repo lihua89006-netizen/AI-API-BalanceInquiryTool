@@ -1,0 +1,29 @@
+{
+  "always_on_top": false,
+  "auto_refresh_minutes": 0,
+  "theme": "light",
+  "providers": [
+    {
+      "uid": "p-example-deepseek",
+      "provider_id": "deepseek_official",
+      "display_name": "示例：DeepSeek 官方",
+      "enabled": true,
+      "auto_refresh_minutes": 3,
+      "config": {
+        "api_key": "sk-你的DeepSeek密钥"
+      }
+    },
+    {
+      "uid": "p-example-openai",
+      "provider_id": "openai_compat",
+      "display_name": "示例：OpenAI 兼容中转站",
+      "enabled": true,
+      "auto_refresh_minutes": 3,
+      "config": {
+        "base_url": "https://api.example.com",
+        "api_key": "sk-你的密钥",
+        "currency": "CNY"
+      }
+    }
+  ]
+}
