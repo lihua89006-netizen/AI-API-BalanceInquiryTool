@@ -108,4 +108,4 @@ config.example.json        配置模板
 
 ## 开源协议
 
-[MIT](LICENSE)
+[GPL-3.0](LICENSE)
